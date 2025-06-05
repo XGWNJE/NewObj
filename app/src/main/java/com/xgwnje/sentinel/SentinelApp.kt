@@ -8,15 +8,15 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.union
+import androidx.compose.foundation.layout.width // Import width
 import androidx.compose.foundation.layout.windowInsetsPadding
-// Remove AppNavRail import if no longer used elsewhere, or keep if still previewing it
-// import com.xgwnje.sentinel.ui.components.AppNavRail
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp // Import dp
 import androidx.navigation.compose.rememberNavController
 import com.xgwnje.sentinel.navigation.AppNavigation
-import com.xgwnje.sentinel.ui.components.CustomNavBar // Import your new Nav Bar
+import com.xgwnje.sentinel.ui.components.CustomNavBar
 import com.xgwnje.sentinel.ui.theme.SentinelTheme
 
 @Composable
@@ -30,13 +30,15 @@ fun SentinelApp() {
             .fillMaxSize()
             .windowInsetsPadding(persistentInsets)
     ) {
-        CustomNavBar( // Use the new CustomNavBar
+        CustomNavBar(
             navController = navController,
-            modifier = Modifier.fillMaxHeight() // It will fill the height of its slot in the Row
+            modifier = Modifier
+                .width(80.dp) // <<< Explicitly define the width of the Nav Bar
+                .fillMaxHeight()
         )
         Box(
             modifier = Modifier
-                .weight(1f)
+                .weight(1f) // Content area takes the remaining space
                 .fillMaxHeight()
         ) {
             AppNavigation(navController = navController)

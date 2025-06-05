@@ -1,15 +1,16 @@
 package com.xgwnje.sentinel.ui.settings
 
-// Ensure all necessary imports are present
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items // Make sure this specific items is imported
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -18,8 +19,7 @@ import androidx.navigation.compose.rememberNavController
 import com.xgwnje.sentinel.R
 import com.xgwnje.sentinel.ui.theme.SentinelTheme
 
-// Enum for different setting categories
-// This definition should be exactly as before and accessible in this file's scope.
+// Enum SettingCategory remains the same
 enum class SettingCategory(val titleResId: Int) {
     MODEL(R.string.settings_category_model),
     NOTIFICATIONS(R.string.settings_category_notifications),
@@ -34,9 +34,8 @@ fun SettingsScreen(
     @Suppress("UNUSED_PARAMETER") navController: NavController,
     modifier: Modifier = Modifier
 ) {
-    // Explicitly type the state variable
     var selectedCategory: SettingCategory by remember { mutableStateOf(SettingCategory.MODEL) }
-    val categories: List<SettingCategory> = SettingCategory.entries // Using .entries, which returns List<SettingCategory>
+    val categories: List<SettingCategory> = SettingCategory.entries
 
     Row(
         modifier = modifier
@@ -46,22 +45,22 @@ fun SettingsScreen(
         Surface(
             modifier = Modifier
                 .fillMaxHeight()
-                .weight(0.35f),
-            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-            tonalElevation = 2.dp
+                .width(175.dp), // <<< ADJUSTED WIDTH (approx. 2/3 of 260dp)
+            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
+            tonalElevation = 1.dp
         ) {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(vertical = 8.dp)
+                contentPadding = PaddingValues(vertical = 0.dp)
             ) {
-                items(categories) { category -> // 'category' here is correctly typed as SettingCategory
-                    val categoryTitle = stringResource(id = category.titleResId) // category.titleResId should resolve
-                    SettingsCategoryItem( // This Composable needs to be defined in this file or imported
+                items(categories) { category ->
+                    val categoryTitle = stringResource(id = category.titleResId)
+                    SettingsCategoryItem(
                         title = categoryTitle,
                         isSelected = category == selectedCategory,
                         onClick = { selectedCategory = category }
                     )
-                    HorizontalDivider()
+                    // HorizontalDivider() // Optional
                 }
             }
         }
@@ -70,40 +69,51 @@ fun SettingsScreen(
         Box(
             modifier = Modifier
                 .fillMaxHeight()
-                .weight(0.65f)
-                .padding(16.dp),
-            contentAlignment = Alignment.Center
+                .weight(1f) // Takes remaining width
+                .padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 16.dp),
+            contentAlignment = Alignment.TopStart
         ) {
-            val selectedCategoryTitle = stringResource(id = selectedCategory.titleResId) // selectedCategory.titleResId should resolve
-            Text(
-                "$selectedCategoryTitle - 内容区域 (占位符)",
-                style = MaterialTheme.typography.headlineMedium
-            )
+            val selectedCategoryTitle = stringResource(id = selectedCategory.titleResId)
+            Column {
+                Text(
+                    selectedCategoryTitle,
+                    style = MaterialTheme.typography.headlineSmall,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+                Text(
+                    "详细内容区域 ($selectedCategoryTitle) - 占位符",
+                    style = MaterialTheme.typography.bodyLarge
+                )
+            }
         }
     }
 }
 
-// This Composable was part of the previous SettingsScreen.kt, ensure it's present and correct.
 @Composable
-fun SettingsCategoryItem(
+fun SettingsCategoryItem( // This Composable remains unchanged from the last version
     title: String,
     isSelected: Boolean,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier // Added modifier as good practice
+    modifier: Modifier = Modifier
 ) {
-    Surface(
-        modifier = modifier // Applied modifier
+    Box(
+        modifier = modifier
             .fillMaxWidth()
+            .background(
+                color = if (isSelected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)
+                else Color.Transparent,
+                shape = RectangleShape
+            )
             .clickable(onClick = onClick)
-            .padding(horizontal = 8.dp, vertical = 4.dp),
-        color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent, // Use androidx.compose.ui.graphics.Color
-        shape = MaterialTheme.shapes.medium
+            .padding(horizontal = 20.dp, vertical = 20.dp)
+        ,
+        contentAlignment = Alignment.CenterStart
     ) {
         Text(
             text = title,
             style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
-            color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+            color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer
+            else MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
