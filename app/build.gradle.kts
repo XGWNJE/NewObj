@@ -84,4 +84,8 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling) // For Compose tooling (preview, inspection)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+
+    implementation(libs.google.android.material)
+    implementation(libs.androidx.core.splashscreen)
+
 }

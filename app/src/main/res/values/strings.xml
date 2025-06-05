@@ -1,3 +1,20 @@
 <resources>
-    <string name="app_name">Sentinel</string>
+    <!-- App Name - Referenced in AndroidManifest.xml -->
+    <string name="app_name">哨兵Sentinel</string>
+
+
+    <string name="settings_title">设置</string>
+    <string name="settings_category_model">模型</string>
+    <string name="settings_category_notifications">通知</string>
+    <string name="settings_category_ble_connection">设备互联</string>
+    <string name="settings_category_subscription">订阅与授权</string>
+    <string name="settings_category_video_log">视频记录</string>
+    <string name="settings_category_background_optimization">后台优化</string>
+    <string name="nav_title_preview">预览</string>
+    <string name="nav_title_settings">设置</string>
+    <!-- In strings.xml -->
+    <string name="preview_screen_title">哨兵 - 预览</string>
+    <string name="preview_camera_placeholder">摄像头预览区</string>
+    <string name="preview_status_stopped_placeholder">监控已停止</string>
+    <string name="preview_start_monitoring_button">开始监控</string>
 </resources>

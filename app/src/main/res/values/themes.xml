@@ -1,5 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
 
-    <style name="Theme.Sentinel" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.Sentinel.AppBase" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">@color/primary_accent</item>
+        <item name="colorOnPrimary">@color/on_primary_dark</item>
+        <item name="android:windowBackground">@color/dark_background</item>
+        <!-- Initial bar colors, will be overridden by enableEdgeToEdge/controller -->
+        <item name="android:statusBarColor">@color/dark_background</item>
+        <item name="android:navigationBarColor">@color/dark_background</item>
+    </style>
+
+    <style name="Theme.Sentinel.AppBase.Fullscreen" parent="Theme.Sentinel.AppBase">
+        <item name="android:windowLayoutInDisplayCutoutMode" tools:targetApi="o_mr1">shortEdges</item>
+        <!-- Ensure window can draw behind system bars -->
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <!-- These transparent settings help enableEdgeToEdge start from a clean slate -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+
+    <!-- Splash Screen Theme -->
+    <style name="Theme.App.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/dark_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher_round</item> <!-- Or your preferred icon -->
+        <item name="postSplashScreenTheme">@style/Theme.Sentinel.AppBase.Fullscreen</item>
+    </style>
 </resources>
