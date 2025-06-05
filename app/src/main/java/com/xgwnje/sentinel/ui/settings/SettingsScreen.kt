@@ -17,10 +17,13 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.xgwnje.sentinel.R
+import com.xgwnje.sentinel.data.AppTheme // For preview
+import com.xgwnje.sentinel.ui.settings.sections.GeneralSettingsSection
 import com.xgwnje.sentinel.ui.theme.SentinelTheme
 
 // Enum SettingCategory remains the same
 enum class SettingCategory(val titleResId: Int) {
+    GENERAL(R.string.settings_category_general),
     MODEL(R.string.settings_category_model),
     NOTIFICATIONS(R.string.settings_category_notifications),
     BLE_CONNECTION(R.string.settings_category_ble_connection),
@@ -34,19 +37,18 @@ fun SettingsScreen(
     @Suppress("UNUSED_PARAMETER") navController: NavController,
     modifier: Modifier = Modifier
 ) {
-    var selectedCategory: SettingCategory by remember { mutableStateOf(SettingCategory.MODEL) }
+    var selectedCategory: SettingCategory by remember { mutableStateOf(SettingCategory.GENERAL) }
     val categories: List<SettingCategory> = SettingCategory.entries
 
     Row(
-        modifier = modifier
-            .fillMaxSize()
+        modifier = modifier.fillMaxSize()
     ) {
-        // Left Pane (Master - Settings Categories)
         Surface(
             modifier = Modifier
                 .fillMaxHeight()
-                .width(175.dp), // <<< ADJUSTED WIDTH (approx. 2/3 of 260dp)
-            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
+                .width(175.dp),
+            // Use surfaceVariant for the master pane background
+            color = MaterialTheme.colorScheme.surfaceVariant,
             tonalElevation = 1.dp
         ) {
             LazyColumn(
@@ -60,37 +62,35 @@ fun SettingsScreen(
                         isSelected = category == selectedCategory,
                         onClick = { selectedCategory = category }
                     )
-                    // HorizontalDivider() // Optional
                 }
             }
         }
 
-        // Right Pane (Detail - Content for selected category)
         Box(
             modifier = Modifier
                 .fillMaxHeight()
-                .weight(1f) // Takes remaining width
+                .weight(1f)
                 .padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 16.dp),
             contentAlignment = Alignment.TopStart
         ) {
-            val selectedCategoryTitle = stringResource(id = selectedCategory.titleResId)
-            Column {
-                Text(
-                    selectedCategoryTitle,
-                    style = MaterialTheme.typography.headlineSmall,
-                    modifier = Modifier.padding(bottom = 16.dp)
-                )
-                Text(
-                    "详细内容区域 ($selectedCategoryTitle) - 占位符",
-                    style = MaterialTheme.typography.bodyLarge
-                )
+            when (selectedCategory) {
+                SettingCategory.GENERAL -> GeneralSettingsSection()
+                SettingCategory.MODEL -> {
+                    val title = stringResource(id = SettingCategory.MODEL.titleResId)
+                    Column { Text(title, style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(bottom = 16.dp)); Text("详细内容区域 ($title) - 占位符", style = MaterialTheme.typography.bodyLarge) }
+                }
+                // ... other cases ...
+                else -> {
+                    val title = stringResource(id = selectedCategory.titleResId)
+                    Column { Text(title, style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(bottom = 16.dp)); Text("详细内容区域 ($title) - 占位符", style = MaterialTheme.typography.bodyLarge) }
+                }
             }
         }
     }
 }
 
 @Composable
-fun SettingsCategoryItem( // This Composable remains unchanged from the last version
+fun SettingsCategoryItem(
     title: String,
     isSelected: Boolean,
     onClick: () -> Unit,
@@ -100,28 +100,37 @@ fun SettingsCategoryItem( // This Composable remains unchanged from the last ver
         modifier = modifier
             .fillMaxWidth()
             .background(
-                color = if (isSelected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)
-                else Color.Transparent,
+                // Use primaryContainer for selected item background
+                color = if (isSelected) MaterialTheme.colorScheme.primaryContainer
+                else Color.Transparent, // Or MaterialTheme.colorScheme.surfaceVariant if items should blend with pane
                 shape = RectangleShape
             )
             .clickable(onClick = onClick)
-            .padding(horizontal = 20.dp, vertical = 20.dp)
-        ,
+            .padding(horizontal = 20.dp, vertical = 20.dp),
         contentAlignment = Alignment.CenterStart
     ) {
         Text(
             text = title,
             style = MaterialTheme.typography.titleMedium,
+            // Use onPrimaryContainer for selected text, onSurfaceVariant for unselected
             color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer
             else MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
 
-@Preview(showBackground = true, device = "spec:width=1280dp,height=800dp,dpi=240,orientation=landscape")
+@Preview(showBackground = true, device = "spec:width=1280dp,height=800dp,dpi=240,orientation=landscape", name="Settings Screen Dark")
 @Composable
-fun SettingsScreenPreview() {
-    SentinelTheme {
+fun SettingsScreenPreviewDark() {
+    SentinelTheme(currentAppTheme = AppTheme.DARK) {
+        SettingsScreen(navController = rememberNavController())
+    }
+}
+
+@Preview(showBackground = true, device = "spec:width=1280dp,height=800dp,dpi=240,orientation=landscape", name="Settings Screen Light")
+@Composable
+fun SettingsScreenPreviewLight() {
+    SentinelTheme(currentAppTheme = AppTheme.LIGHT) {
         SettingsScreen(navController = rememberNavController())
     }
 }

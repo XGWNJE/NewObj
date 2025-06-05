@@ -12,17 +12,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.graphics.vector.ImageVector // Correct import
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp // Import for sp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.xgwnje.sentinel.data.AppTheme
 import com.xgwnje.sentinel.navigation.Screen
 import com.xgwnje.sentinel.navigation.topLevelScreens
 import com.xgwnje.sentinel.ui.theme.SentinelTheme
@@ -38,7 +39,8 @@ fun CustomNavBar(
     Column(
         modifier = modifier
             .fillMaxHeight()
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f)),
+            // Use surfaceVariant for the overall bar background
+            .background(MaterialTheme.colorScheme.surfaceVariant),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         topLevelScreens.forEach { screen ->
@@ -49,9 +51,9 @@ fun CustomNavBar(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
-                    .background(
-                        color = if (selected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)
-                        else Color.Transparent,
+                    .background( // Selected item background
+                        color = if (selected) MaterialTheme.colorScheme.primaryContainer
+                        else Color.Transparent, // Or MaterialTheme.colorScheme.surfaceVariant if you want it same as bar
                         shape = RectangleShape
                     )
                     .clickable {
@@ -80,55 +82,69 @@ fun CustomNavBar(
 @Composable
 private fun CustomNavItemContent(
     title: String,
-    icon: ImageVector, // Parameter type
+    icon: ImageVector,
     isSelected: Boolean,
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = modifier
-            .padding(vertical = 16.dp, horizontal = 4.dp), // Increased vertical padding for larger content
+        modifier = modifier.padding(vertical = 16.dp, horizontal = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
         Icon(
             imageVector = icon,
             contentDescription = title,
-            modifier = Modifier.size(36.dp), // INCREASED ICON SIZE
-            tint = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer
-            else MaterialTheme.colorScheme.onSurfaceVariant
+            modifier = Modifier.size(36.dp),
+            tint = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer // Tint for selected icon
+            else MaterialTheme.colorScheme.onSurfaceVariant // Tint for unselected icon
         )
-        Spacer(modifier = Modifier.height(8.dp)) // INCREASED SPACER
+        Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = title,
-            style = MaterialTheme.typography.labelMedium.copy( // Using labelMedium as base
-                fontSize = 13.sp // Custom font size, adjust as needed
+            style = MaterialTheme.typography.labelMedium.copy(
+                fontSize = 13.sp
             ),
             textAlign = TextAlign.Center,
-            maxLines = 2, // Allow text to wrap to two lines if necessary
-            color = if (isSelected) MaterialTheme.colorScheme.primary
-            else MaterialTheme.colorScheme.onSurfaceVariant
+            maxLines = 2,
+            color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer // Color for selected text
+            else MaterialTheme.colorScheme.onSurfaceVariant // Color for unselected text
         )
     }
 }
 
-@Preview(showBackground = true, name = "CustomNavBar Standalone")
+// Previews ... (keep them as they were, they should reflect the new colors)
+@Preview(showBackground = true, name = "CustomNavBar Standalone Dark", widthDp = 80)
 @Composable
-fun CustomNavBarPreview() {
-    SentinelTheme {
+fun CustomNavBarPreviewDark() {
+    SentinelTheme(currentAppTheme = AppTheme.DARK) { // Explicitly preview dark theme
         val navController = rememberNavController()
         CustomNavBar(
             navController = navController,
             modifier = Modifier
-                .width(80.dp) // Typical NavRail width for preview
-                .height(300.dp) // Constrained height for preview
+                .width(80.dp)
+                .height(300.dp)
         )
     }
 }
 
-@Preview(showBackground = true, device = "spec:width=1280dp,height=800dp,dpi=240,orientation=landscape", name = "CustomNavBar Integration")
+@Preview(showBackground = true, name = "CustomNavBar Standalone Light", widthDp = 80)
 @Composable
-fun CustomNavBarIntegrationPreview() {
-    SentinelTheme {
+fun CustomNavBarPreviewLight() {
+    SentinelTheme(currentAppTheme = AppTheme.LIGHT) { // Explicitly preview light theme
+        val navController = rememberNavController()
+        CustomNavBar(
+            navController = navController,
+            modifier = Modifier
+                .width(80.dp)
+                .height(300.dp)
+        )
+    }
+}
+
+@Preview(showBackground = true, device = "spec:width=1280dp,height=800dp,dpi=240,orientation=landscape", name = "CustomNavBar Integration Dark")
+@Composable
+fun CustomNavBarIntegrationPreviewDark() {
+    SentinelTheme(currentAppTheme = AppTheme.DARK) {
         Row(Modifier.fillMaxSize()) {
             CustomNavBar(
                 navController = rememberNavController(),
@@ -140,9 +156,9 @@ fun CustomNavBarIntegrationPreview() {
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight()
-                    .background(Color.DarkGray)
+                    .background(MaterialTheme.colorScheme.background) // Use theme background
             ) {
-                Text("Content Area", style = MaterialTheme.typography.headlineMedium, modifier = Modifier.align(Alignment.Center), color = Color.White)
+                Text("Content Area", style = MaterialTheme.typography.headlineMedium, modifier = Modifier.align(Alignment.Center), color = MaterialTheme.colorScheme.onBackground)
             }
         }
     }

@@ -5,55 +5,50 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+// import androidx.compose.foundation.isSystemInDarkTheme // Not strictly needed if not using "Follow System" yet
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import com.xgwnje.sentinel.data.AppTheme
+import com.xgwnje.sentinel.data.ThemeDataStore // Make sure this is the correct path to your ThemeDataStore
 import com.xgwnje.sentinel.ui.theme.SentinelTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
-        // 1. Install SplashScreen (handles transition from system splash to app theme)
-        // This should be called before super.onCreate() or at least before setContent.
-        installSplashScreen()
-
+        installSplashScreen() // Call before super.onCreate()
         super.onCreate(savedInstanceState)
 
-        // 2. Enable edge-to-edge display. This will:
-        //    - Call WindowCompat.setDecorFitsSystemWindows(window, false)
-        //    - Set system bars to be transparent.
-        //    - Handle icon contrast for system bars.
+        // ThemeDataStore instance
+        val themeDataStore = ThemeDataStore(applicationContext) // Use applicationContext
+
         enableEdgeToEdge(
-            statusBarStyle = SystemBarStyle.auto( // Effectively transparent, icons adapt
+            statusBarStyle = SystemBarStyle.auto(
                 android.graphics.Color.TRANSPARENT,
+                android.graphics.Color.TRANSPARENT
+            ) { resources.configuration.isNightModeActive }, // Let it adapt for now
+            navigationBarStyle = SystemBarStyle.auto(
                 android.graphics.Color.TRANSPARENT,
-                detectDarkMode = { resources.configuration.isNightModeActive } // Or fixed { true } for light icons
-            ),
-            navigationBarStyle = SystemBarStyle.auto( // Similar for nav bar
-                android.graphics.Color.TRANSPARENT,
-                android.graphics.Color.TRANSPARENT,
-                detectDarkMode = { resources.configuration.isNightModeActive }
-            )
+                android.graphics.Color.TRANSPARENT
+            ) { resources.configuration.isNightModeActive } // Let it adapt for now
         )
 
-        // 3. Explicitly hide the status bar using WindowInsetsController.
-        // This is done after edge-to-edge setup to ensure the window is already
-        // prepared to draw behind where the status bar would be.
         val windowInsetsController = WindowCompat.getInsetsController(window, window.decorView)
         windowInsetsController.hide(WindowInsetsCompat.Type.statusBars())
         windowInsetsController.systemBarsBehavior =
             WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
 
-
-        // 4. Set Compose content.
-        // By this point, the window should be fully configured for edge-to-edge
-        // with the status bar hidden.
         setContent {
-            SentinelTheme {
+            // Collect the theme preference from DataStore, defaulting to DARK if nothing is stored yet
+            val currentAppTheme by themeDataStore.appThemeFlow.collectAsState(initial = AppTheme.DARK)
+
+            SentinelTheme(currentAppTheme = currentAppTheme) { // Pass the observed theme
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background

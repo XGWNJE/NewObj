@@ -88,4 +88,6 @@ dependencies {
     implementation(libs.google.android.material)
     implementation(libs.androidx.core.splashscreen)
 
+    implementation(libs.androidx.datastore.preferences)
+
 }
