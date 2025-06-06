@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">哨兵Sentinel</string>
+    <string name="app_name">哨兵</string>
     <string name="settings_title">设置</string>
     <string name="settings_category_model">模型</string>
     <string name="settings_category_notifications">通知</string>
