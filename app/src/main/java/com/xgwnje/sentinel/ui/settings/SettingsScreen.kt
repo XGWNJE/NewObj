@@ -12,53 +12,35 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import com.xgwnje.sentinel.R
-import com.xgwnje.sentinel.data.AppTheme // For preview
-import com.xgwnje.sentinel.ui.settings.sections.GeneralSettingsSection
-import com.xgwnje.sentinel.ui.theme.SentinelTheme
+import com.xgwnje.sentinel.ui.preview.PreviewViewModel // 导入 ViewModel
 
-// Enum SettingCategory remains the same
 enum class SettingCategory(val titleResId: Int) {
     GENERAL(R.string.settings_category_general),
-    MODEL(R.string.settings_category_model),
-    NOTIFICATIONS(R.string.settings_category_notifications),
-    BLE_CONNECTION(R.string.settings_category_ble_connection),
-    SUBSCRIPTION(R.string.settings_category_subscription),
-    VIDEO_LOG(R.string.settings_category_video_log),
-    BACKGROUND_OPTIMIZATION(R.string.settings_category_background_optimization)
+    DIFFERENCE_CHECK(R.string.settings_category_model), // 将“模型”改为“画面差异检查”
+    // ... 其他类别
 }
 
 @Composable
 fun SettingsScreen(
-    @Suppress("UNUSED_PARAMETER") navController: NavController,
-    modifier: Modifier = Modifier
+    navController: NavController,
+    previewViewModel: PreviewViewModel // 接收共享的 ViewModel
 ) {
     var selectedCategory: SettingCategory by remember { mutableStateOf(SettingCategory.GENERAL) }
-    val categories: List<SettingCategory> = SettingCategory.entries
+    val categories = SettingCategory.values()
 
-    Row(
-        modifier = modifier.fillMaxSize()
-    ) {
+    Row(modifier = Modifier.fillMaxSize()) {
         Surface(
-            modifier = Modifier
-                .fillMaxHeight()
-                .width(175.dp),
-            // Use surfaceVariant for the master pane background
+            modifier = Modifier.fillMaxHeight().width(175.dp),
             color = MaterialTheme.colorScheme.surfaceVariant,
             tonalElevation = 1.dp
         ) {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(vertical = 0.dp)
-            ) {
+            LazyColumn(modifier = Modifier.fillMaxSize()) {
                 items(categories) { category ->
-                    val categoryTitle = stringResource(id = category.titleResId)
                     SettingsCategoryItem(
-                        title = categoryTitle,
+                        title = stringResource(id = category.titleResId),
                         isSelected = category == selectedCategory,
                         onClick = { selectedCategory = category }
                     )
@@ -67,23 +49,15 @@ fun SettingsScreen(
         }
 
         Box(
-            modifier = Modifier
-                .fillMaxHeight()
-                .weight(1f)
-                .padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 16.dp),
+            modifier = Modifier.fillMaxHeight().weight(1f).padding(16.dp),
             contentAlignment = Alignment.TopStart
         ) {
             when (selectedCategory) {
-                SettingCategory.GENERAL -> GeneralSettingsSection()
-                SettingCategory.MODEL -> {
-                    val title = stringResource(id = SettingCategory.MODEL.titleResId)
-                    Column { Text(title, style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(bottom = 16.dp)); Text("详细内容区域 ($title) - 占位符", style = MaterialTheme.typography.bodyLarge) }
-                }
-                // ... other cases ...
-                else -> {
-                    val title = stringResource(id = selectedCategory.titleResId)
-                    Column { Text(title, style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(bottom = 16.dp)); Text("详细内容区域 ($title) - 占位符", style = MaterialTheme.typography.bodyLarge) }
-                }
+                // TODO: 实现通用设置
+                SettingCategory.GENERAL -> Text("通用设置内容区域")
+                // 将阈值设置UI集成到此处
+                SettingCategory.DIFFERENCE_CHECK -> DifferenceSettingsSection(viewModel = previewViewModel)
+                else -> Text("其他设置内容区域")
             }
         }
     }
@@ -93,16 +67,13 @@ fun SettingsScreen(
 fun SettingsCategoryItem(
     title: String,
     isSelected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    onClick: () -> Unit
 ) {
     Box(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxWidth()
             .background(
-                // Use primaryContainer for selected item background
-                color = if (isSelected) MaterialTheme.colorScheme.primaryContainer
-                else Color.Transparent, // Or MaterialTheme.colorScheme.surfaceVariant if items should blend with pane
+                color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
                 shape = RectangleShape
             )
             .clickable(onClick = onClick)
@@ -112,25 +83,7 @@ fun SettingsCategoryItem(
         Text(
             text = title,
             style = MaterialTheme.typography.titleMedium,
-            // Use onPrimaryContainer for selected text, onSurfaceVariant for unselected
-            color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer
-            else MaterialTheme.colorScheme.onSurfaceVariant
+            color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
         )
-    }
-}
-
-@Preview(showBackground = true, device = "spec:width=1280dp,height=800dp,dpi=240,orientation=landscape", name="Settings Screen Dark")
-@Composable
-fun SettingsScreenPreviewDark() {
-    SentinelTheme(currentAppTheme = AppTheme.DARK) {
-        SettingsScreen(navController = rememberNavController())
-    }
-}
-
-@Preview(showBackground = true, device = "spec:width=1280dp,height=800dp,dpi=240,orientation=landscape", name="Settings Screen Light")
-@Composable
-fun SettingsScreenPreviewLight() {
-    SentinelTheme(currentAppTheme = AppTheme.LIGHT) {
-        SettingsScreen(navController = rememberNavController())
     }
 }

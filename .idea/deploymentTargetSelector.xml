@@ -4,7 +4,7 @@
     <selectionStates>
       <SelectionState runConfigName="SentinelApp.app">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2025-06-06T10:11:48.373062Z">
+        <DropdownSelection timestamp="2025-06-06T10:36:08.590764Z">
           <Target type="DEFAULT_BOOT">
             <handle>
               <DeviceId pluginId="PhysicalDevice" identifier="serial=7d3584e1" />

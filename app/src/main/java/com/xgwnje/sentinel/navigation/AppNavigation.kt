@@ -1,34 +1,48 @@
-package com.xgwnje.sentinel.navigation // Ensure this package is correct
+package com.xgwnje.sentinel.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.xgwnje.sentinel.ui.preview.PreviewScreen // Will create this screen Composable later
-import com.xgwnje.sentinel.ui.settings.SettingsScreen // Will create this screen Composable later
+import androidx.navigation.navigation
+import com.xgwnje.sentinel.ui.preview.PreviewScreen
+import com.xgwnje.sentinel.ui.preview.PreviewViewModel
+import com.xgwnje.sentinel.ui.settings.SettingsScreen
+
 @Composable
 fun AppNavigation(
     navController: NavHostController,
-    modifier: Modifier = Modifier // Pass modifier for NavHost styling if needed
+    modifier: Modifier = Modifier
 ) {
     NavHost(
         navController = navController,
-        startDestination = Screen.Preview.route, // Default screen to show
+        startDestination = "main_graph",
         modifier = modifier
     ) {
-        composable(Screen.Preview.route) {
-            // Composable function for the Preview screen
-            PreviewScreen(navController = navController)
-        }
-        composable(Screen.Settings.route) {
-            // Composable function for the Settings screen
-            SettingsScreen(navController = navController)
-        }
+        navigation(
+            startDestination = Screen.Preview.route,
+            route = "main_graph"
+        ) {
+            composable(Screen.Preview.route) { backStackEntry ->
+                val parentEntry = remember(backStackEntry) {
+                    navController.getBackStackEntry("main_graph")
+                }
+                val previewViewModel: PreviewViewModel = viewModel(parentEntry)
 
-        // Add more destinations here as your app grows
-        // composable(Screen.VideoLog.route) {
-        //    VideoLogScreen(navController = navController)
-        // }
+                PreviewScreen(navController = navController, viewModel = previewViewModel)
+            }
+
+            composable(Screen.Settings.route) { backStackEntry ->
+                val parentEntry = remember(backStackEntry) {
+                    navController.getBackStackEntry("main_graph")
+                }
+                val previewViewModel: PreviewViewModel = viewModel(parentEntry)
+
+                SettingsScreen(navController = navController, previewViewModel = previewViewModel)
+            }
+        }
     }
 }

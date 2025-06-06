@@ -57,6 +57,16 @@ android {
 }
 
 dependencies {
+    // CameraX (用于摄像头功能)
+    val cameraxVersion = "1.3.4" // 使用一个稳定的 CameraX 版本
+    implementation("androidx.camera:camera-core:${cameraxVersion}")
+    implementation("androidx.camera:camera-camera2:${cameraxVersion}")
+    implementation("androidx.camera:camera-lifecycle:${cameraxVersion}")
+    implementation("androidx.camera:camera-view:${cameraxVersion}")
+
+    // Accompanist Permissions (用于在 Compose 中更方便地处理权限)
+    implementation("com.google.accompanist:accompanist-permissions:0.34.0")
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
