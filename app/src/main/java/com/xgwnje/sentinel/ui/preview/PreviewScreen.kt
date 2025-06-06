@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -24,7 +25,7 @@ import com.xgwnje.sentinel.R
 import com.xgwnje.sentinel.data.AppTheme
 import com.xgwnje.sentinel.ui.theme.SentinelTheme
 
-// 主屏幕，实现带细线分隔的自适应布局
+// 主屏幕，实现能根据屏幕宽高比动态切换布局的逻辑
 @Composable
 fun PreviewScreen(
     @Suppress("UNUSED_PARAMETER") navController: NavController,
@@ -45,68 +46,90 @@ fun PreviewScreen(
     }
     // --- 模拟状态变量结束 ---
 
-    // 根布局为水平排列 (Row)
-    Row(
-        modifier = modifier.fillMaxSize()
-    ) {
-        // 1. 左侧：主预览区域
+    val configuration = LocalConfiguration.current
+    val screenWidthDp = configuration.screenWidthDp.dp
+    val screenHeightDp = configuration.screenHeightDp.dp
+    val screenAspectRatio = screenWidthDp.value / screenHeightDp.value
+
+    val useWideLayout = screenAspectRatio > 1.8f
+
+    if (useWideLayout) {
+        // 宽屏 (>16:9) 布局
+        LandscapeWideLayout(
+            isPreviewing, isMonitoring, isAlarmActive,
+            { isPreviewing = !isPreviewing }, { isMonitoring = !isMonitoring }, { isAlarmActive = false }
+        )
+    } else {
+        // 窄屏 (<=16:9) "倒品字型" 布局
+        LandscapeNarrowLayout(
+            isPreviewing, isMonitoring, isAlarmActive,
+            { isPreviewing = !isPreviewing }, { isMonitoring = !isMonitoring }, { isAlarmActive = false }
+        )
+    }
+}
+
+// 布局A：适用于宽屏设备 (>16:9) 的左右并列布局
+@Composable
+private fun LandscapeWideLayout(
+    isPreviewing: Boolean, isMonitoring: Boolean, isAlarmActive: Boolean,
+    onPreviewToggle: () -> Unit, onMonitoringToggle: () -> Unit, onResetAlarm: () -> Unit,
+) {
+    Row(modifier = Modifier.fillMaxSize()) {
         Box(
             modifier = Modifier
                 .fillMaxHeight()
-                .aspectRatio(4 / 3f, matchHeightConstraintsFirst = true) // 保持 4:3 的宽高比
+                .aspectRatio(4 / 3f, matchHeightConstraintsFirst = true)
                 .background(Color.Black)
         ) {
-            if (isPreviewing) {
-                CameraPreviewPlaceholder()
-            } else {
-                PreviewPausedPlaceholder()
-            }
+            if (isPreviewing) CameraPreviewPlaceholder() else PreviewPausedPlaceholder()
         }
-
-        // 细线分隔
         VerticalDivider()
-
-        // 2. 右侧：状态面板和控制按钮，自适应宽度
-        Column(
-            modifier = Modifier
-                .fillMaxSize() // 填充所有剩余空间
-        ) {
-            // 状态面板，占据大部分垂直空间
-            MonitoringStatusPanel(
-                isMonitoring = isMonitoring,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f) // 核心修改：让状态面板占据所有可用的垂直权重
-            )
-
-            // 细线分隔
+        Column(modifier = Modifier.fillMaxSize()) {
+            MonitoringStatusPanel(isMonitoring, modifier = Modifier.weight(1f))
             HorizontalDivider()
-
-            // 快捷按钮，高度由其内容决定
-            ActionButtons(
-                isPreviewing = isPreviewing,
-                isMonitoring = isMonitoring,
-                isAlarmActive = isAlarmActive,
-                onPreviewToggle = { isPreviewing = !isPreviewing },
-                onMonitoringToggle = { isMonitoring = !isMonitoring },
-                onResetAlarm = { isAlarmActive = false }
+            ActionButtonsVertical(
+                isPreviewing, isMonitoring, isAlarmActive,
+                onPreviewToggle, onMonitoringToggle, onResetAlarm
             )
         }
     }
 }
 
-// 区域1: 摄像头预览占位符
+// 布局B：适用于标准/窄屏设备 (<=16:9) 的 "倒品字型" 布局
 @Composable
-private fun CameraPreviewPlaceholder() {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        // 在实际应用中，这里会被 CameraX 的 PreviewView 替代
+private fun LandscapeNarrowLayout(
+    isPreviewing: Boolean, isMonitoring: Boolean, isAlarmActive: Boolean,
+    onPreviewToggle: () -> Unit, onMonitoringToggle: () -> Unit, onResetAlarm: () -> Unit,
+) {
+    Column(modifier = Modifier.fillMaxSize()) {
+        Row(modifier = Modifier.weight(1f)) {
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .aspectRatio(4 / 3f, matchHeightConstraintsFirst = true)
+                    .background(Color.Black)
+            ) {
+                if (isPreviewing) CameraPreviewPlaceholder() else PreviewPausedPlaceholder()
+            }
+            VerticalDivider()
+            MonitoringStatusPanel(isMonitoring, modifier = Modifier
+                .weight(1f)
+                .fillMaxHeight())
+        }
+        HorizontalDivider()
+        ActionButtonsHorizontal(
+            isPreviewing, isMonitoring, isAlarmActive,
+            onPreviewToggle, onMonitoringToggle, onResetAlarm
+        )
     }
 }
 
-// 区域1: 预览暂停时的占位符
+
+// --- 共享 UI 组件 ---
+
+@Composable
+private fun CameraPreviewPlaceholder() { /* ... 内容不变 ... */ }
+
 @Composable
 private fun PreviewPausedPlaceholder(modifier: Modifier = Modifier) {
     Box(
@@ -119,164 +142,142 @@ private fun PreviewPausedPlaceholder(modifier: Modifier = Modifier) {
             Icon(
                 imageVector = Icons.Filled.VideocamOff,
                 contentDescription = stringResource(R.string.preview_camera_placeholder),
-                modifier = Modifier.size(96.dp),
-                tint = Color.Gray
+                modifier = Modifier.size(96.dp), tint = Color.Gray
             )
             Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = "预览已暂停",
-                style = MaterialTheme.typography.headlineSmall,
-                color = Color.LightGray
-            )
+            Text(text = "预览已暂停", style = MaterialTheme.typography.headlineSmall, color = Color.LightGray)
         }
     }
 }
 
-// 区域2 (右侧): 监控状态面板
 @Composable
 private fun MonitoringStatusPanel(isMonitoring: Boolean, modifier: Modifier = Modifier) {
-    // 核心修改：添加 verticalScroll 使内容可滑动
     Column(
         modifier = modifier
-            .fillMaxWidth()
-            .verticalScroll(rememberScrollState()) // 使内容可上下滑动
+            .verticalScroll(rememberScrollState())
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Text(
-            text = "监控状态",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface
-        )
+        Text("监控状态", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         Divider(thickness = 1.dp, color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f), modifier = Modifier.padding(vertical = 8.dp))
-        Text("模式: 主机模式", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
-        Text("蓝牙: 已连接 1 个从机", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
-        Text("AI识别: ${if (isMonitoring) "已开启 - 车辆" else "未启动"}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
-        Text("当前事件: ${if (isMonitoring) "检测到移动" else "无"}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
-        // 增加额外文本以测试滑动效果
-        Text("置信度: 92%", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
-        Text("录制状态: 未录制", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
-        Text("存储空间: 5.2 / 10.0 GB", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
-        Text("上次警报: 10:35 AM", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
-        Text("系统负载: 35%", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
-        Text("网络状态: 已连接", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
+        Text("模式: 主机模式", style = MaterialTheme.typography.bodyMedium)
+        Text("蓝牙: 已连接 1 个从机", style = MaterialTheme.typography.bodyMedium)
+        Text("AI识别: ${if (isMonitoring) "已开启 - 车辆" else "未启动"}", style = MaterialTheme.typography.bodyMedium)
+        Text("当前事件: ${if (isMonitoring) "检测到移动" else "无"}", style = MaterialTheme.typography.bodyMedium)
+        Text("置信度: 92%", style = MaterialTheme.typography.bodyMedium)
+        Text("录制状态: 未录制", style = MaterialTheme.typography.bodyMedium)
     }
 }
 
-
-// 区域2 (右侧): 快捷按钮区域 (垂直排列)
+// 按钮容器A：垂直排列 (用于宽屏)
 @Composable
-private fun ActionButtons(
-    isPreviewing: Boolean,
-    isMonitoring: Boolean,
-    isAlarmActive: Boolean,
-    onPreviewToggle: () -> Unit,
-    onMonitoringToggle: () -> Unit,
-    onResetAlarm: () -> Unit,
+private fun ActionButtonsVertical(
+    isPreviewing: Boolean, isMonitoring: Boolean, isAlarmActive: Boolean,
+    onPreviewToggle: () -> Unit, onMonitoringToggle: () -> Unit, onResetAlarm: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = modifier,
+        verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        ActionButton(
-            text = if (isPreviewing) "停止预览" else "开始预览",
-            icon = if (isPreviewing) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-            onClick = onPreviewToggle
-        )
-        ActionButton(
-            text = if (isMonitoring) "暂停监控" else "开始监控",
-            icon = if (isMonitoring) Icons.Default.PauseCircleOutline else Icons.Default.PlayCircleOutline,
-            onClick = onMonitoringToggle,
-            isPrimary = true
-        )
-        ActionButton(
-            text = "复位警报",
-            icon = Icons.Default.Refresh,
-            onClick = onResetAlarm,
-            enabled = isAlarmActive
-        )
+        ActionButton(text = if (isPreviewing) "停止预览" else "开始预览", icon = if (isPreviewing) Icons.Default.VisibilityOff else Icons.Default.Visibility, onClick = onPreviewToggle, modifier = Modifier.fillMaxWidth())
+        HorizontalDivider()
+        ActionButton(text = if (isMonitoring) "暂停监控" else "开始监控", icon = if (isMonitoring) Icons.Default.PauseCircleOutline else Icons.Default.PlayCircleOutline, onClick = onMonitoringToggle, isPrimary = true, modifier = Modifier.fillMaxWidth())
+        HorizontalDivider()
+        ActionButton(text = "复位警报", icon = Icons.Default.Refresh, onClick = onResetAlarm, enabled = isAlarmActive, modifier = Modifier.fillMaxWidth())
     }
 }
+
+// 按钮容器B：水平排列 (用于窄屏)
+@Composable
+private fun ActionButtonsHorizontal(
+    isPreviewing: Boolean, isMonitoring: Boolean, isAlarmActive: Boolean,
+    onPreviewToggle: () -> Unit, onMonitoringToggle: () -> Unit, onResetAlarm: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(IntrinsicSize.Min),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        ActionButton(text = if (isPreviewing) "停止预览" else "开始预览", icon = if (isPreviewing) Icons.Default.VisibilityOff else Icons.Default.Visibility, onClick = onPreviewToggle, modifier = Modifier.weight(1f).fillMaxHeight(), isVerticalContent = false)
+        VerticalDivider()
+        ActionButton(text = if (isMonitoring) "暂停监控" else "开始监控", icon = if (isMonitoring) Icons.Default.PauseCircleOutline else Icons.Default.PlayCircleOutline, onClick = onMonitoringToggle, isPrimary = true, modifier = Modifier.weight(1f).fillMaxHeight(), isVerticalContent = false)
+        VerticalDivider()
+        ActionButton(text = "复位警报", icon = Icons.Default.Refresh, onClick = onResetAlarm, enabled = isAlarmActive, modifier = Modifier.weight(1f).fillMaxHeight(), isVerticalContent = false)
+    }
+}
+
 
 // 可复用的快捷按钮组件
 @Composable
 private fun ActionButton(
-    text: String,
-    icon: ImageVector,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-    isPrimary: Boolean = false
+    text: String, icon: ImageVector, onClick: () -> Unit, modifier: Modifier = Modifier,
+    enabled: Boolean = true, isPrimary: Boolean = false,
+    isVerticalContent: Boolean = true
 ) {
     val buttonColors = if (isPrimary) {
-        ButtonDefaults.buttonColors(
+        ButtonDefaults.textButtonColors(
             containerColor = MaterialTheme.colorScheme.primary,
             contentColor = MaterialTheme.colorScheme.onPrimary,
-            disabledContainerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
-            disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+            disabledContainerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
         )
     } else {
-        ButtonDefaults.outlinedButtonColors(
+        ButtonDefaults.textButtonColors(
             contentColor = MaterialTheme.colorScheme.onSurface
         )
     }
 
-    val buttonToShow: @Composable RowScope.() -> Unit = {
-        Icon(imageVector = icon, contentDescription = text)
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(text = text, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-    }
-
-    if (isPrimary) {
-        Button(
-            onClick = onClick, enabled = enabled, shape = RectangleShape,
-            modifier = modifier.fillMaxWidth(), colors = buttonColors,
-            contentPadding = PaddingValues(vertical = 12.dp)
-        ) {
-            buttonToShow()
-        }
-    } else {
-        OutlinedButton(
-            onClick = onClick, enabled = enabled, shape = RectangleShape,
-            modifier = modifier.fillMaxWidth(), colors = buttonColors,
-            contentPadding = PaddingValues(vertical = 12.dp)
-        ) {
-            buttonToShow()
+    TextButton(
+        onClick = onClick, enabled = enabled, shape = RectangleShape,
+        modifier = modifier,
+        colors = buttonColors,
+        contentPadding = if (isVerticalContent) PaddingValues(vertical = 12.dp, horizontal = 8.dp) else PaddingValues(vertical = 4.dp, horizontal = 4.dp)
+    ) {
+        // 核心修复：移除 contentModifier，让内容尺寸自适应
+        if (isVerticalContent) {
+            // 垂直布局 (用于宽屏右侧)
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Icon(imageVector = icon, contentDescription = text, modifier = Modifier.size(24.dp))
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(text = text, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+            }
+        } else {
+            // 水平布局 (用于窄屏底部)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Icon(imageVector = icon, contentDescription = text, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(text = text, fontSize = 13.sp, fontWeight = FontWeight.Normal, maxLines = 1)
+            }
         }
     }
 }
 
-
-// 自定义细线分隔
+// 分隔线组件
 @Composable
 private fun VerticalDivider() {
-    Box(
-        modifier = Modifier
-            .fillMaxHeight()
-            .width(1.dp)
-            .background(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
-    )
+    Box(Modifier.fillMaxHeight().width(1.dp).background(MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)))
 }
 
 @Composable
 private fun HorizontalDivider() {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(1.dp)
-            .background(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
-    )
+    Box(Modifier.fillMaxWidth().height(1.dp).background(MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)))
 }
 
 
 // --- 预览 ---
-@Preview(showBackground = true, device = "spec:width=1280dp,height=800dp,dpi=240,orientation=landscape", name="Preview Screen Dark Theme")
+@Preview(showBackground = true, device = "spec:width=1280dp,height=700dp,dpi=240,orientation=landscape", name = "Wide Screen Preview (>16:9)")
 @Composable
-fun PreviewScreenPreviewDark() {
+fun PreviewScreenPreviewWide() {
     SentinelTheme(currentAppTheme = AppTheme.DARK) {
         Surface(color = MaterialTheme.colorScheme.background) {
             PreviewScreen(navController = rememberNavController())
@@ -284,10 +285,10 @@ fun PreviewScreenPreviewDark() {
     }
 }
 
-@Preview(showBackground = true, device = "spec:width=1280dp,height=800dp,dpi=240,orientation=landscape", name="Preview Screen Light Theme")
+@Preview(showBackground = true, device = "spec:width=1280dp,height=720dp,dpi=240,orientation=landscape", name = "Standard Screen Preview (16:9)")
 @Composable
-fun PreviewScreenPreviewLight() {
-    SentinelTheme(currentAppTheme = AppTheme.LIGHT) {
+fun PreviewScreenPreviewNarrow() {
+    SentinelTheme(currentAppTheme = AppTheme.DARK) {
         Surface(color = MaterialTheme.colorScheme.background) {
             PreviewScreen(navController = rememberNavController())
         }
